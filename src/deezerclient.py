@@ -1,3 +1,4 @@
+import json
 import requests
 
 from deezer.deezer import (
@@ -29,7 +30,7 @@ class DeezerClient():
                 url = f"https://www.deezer.com/ajax/gw-light.php?method={method}&input=3&api_version=1.0&api_token={csrf_token}"
                 
                 if post_data:
-                    response = self.session.post(url, json=post_data)
+                    response = self.session.post(url, data=post_data)
                 else:
                     response = self.session.post(url)
 
@@ -53,10 +54,7 @@ class DeezerClient():
     
     def get_user_notifications(self):
         json_response = self.request_api("POST", "deezer.userMenu")
-
-        if len(json_response["error"]) > 0:
-            print(f"Error: {json_response['error']}")
-            return
+        if not json_response: raise
 
         if json_response["results"] and json_response["results"]["NOTIFICATIONS"]:
             return json_response["results"]["NOTIFICATIONS"]["data"]
@@ -75,3 +73,41 @@ class DeezerClient():
                 ]
             }
         )
+    
+    def get_users_page_profile(self, tab):
+        payload = {
+            "USER_ID": self.user_data["userId"],
+            "tab": tab,
+            "nb": 10000
+        }
+
+        json_response = self.request_api("POST", "deezer.pageProfile", post_data=json.dumps(payload))
+        if not json_response: raise
+
+        if json_response["results"]["TAB"][tab]:
+            if len(json_response["results"]["TAB"][tab]["data"]) > 0:
+                return json_response["results"]["TAB"][tab]["data"]
+            else:
+                return []
+        else:
+            print(f"Error: no {tab} found")
+            return []
+
+
+    def follow_user(self, user_id):
+        payload = {
+            "friend_id": user_id,
+            "ctxt": {
+                "id": user_id,
+                "t": "profile_page"
+                }
+            }
+
+        json_response = self.request_api("POST", "friend.follow", post_data=json.dumps(payload))
+        if not json_response: raise
+
+        if json_response["results"]:
+            return json_response["results"]
+        else:
+            print(f"Error: cannot follow user {user_id} found")
+            raise

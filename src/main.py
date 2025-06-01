@@ -42,17 +42,7 @@ def check_constants():
         exit(1)
 
 
-def main() -> int:
-    # Check for undefined constants
-    check_constants()
-
-    # Init Deezer
-    dc = DeezerClient(DEEZER_COOKIE_ARL)
-
-    # Only hardlinks are supported by Jellyfin
-    set_should_use_links_for_duplicates(True)
-    set_duplicates_links_type("HARDLINK")
-
+def check_for_download_requests(dc):
     # Get the list of Unread notifications of the Bot account
     notifications = list(
             filter(
@@ -109,6 +99,37 @@ def main() -> int:
         # Scan Jellyfin library for new songs
         jellyfin_scan_result = scan_jellyfin_library(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY)
         print(jellyfin_scan_result["message"])
+
+
+def check_friend_requests(dc):
+    followers = dc.get_users_page_profile("followers")
+    followers = [ user["USER_ID"] for user in followers ]
+
+    following = dc.get_users_page_profile("following")
+    following = [ user["USER_ID"] for user in following ]
+
+    users_not_followed = [ user_id for user_id in followers if user_id not in following ]
+
+    for user in users_not_followed:
+        print(f"User {user} not followed, following user...")
+        dc.follow_user(user)
+
+def main() -> int:
+    # Check for undefined constants
+    check_constants()
+
+    # Init Deezer
+    dc = DeezerClient(DEEZER_COOKIE_ARL)
+
+    # Only hardlinks are supported by Jellyfin
+    set_should_use_links_for_duplicates(True)
+    set_duplicates_links_type("HARDLINK")
+
+    # Check for new followers and follow back
+    check_friend_requests(dc)
+
+    # Check for download requests via notifications
+    check_for_download_requests(dc)
 
     return 0
 
