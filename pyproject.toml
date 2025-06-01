@@ -1,0 +1,10 @@
+[project]
+name = "deezer-dl-bot"
+version = "0.0.4"
+
+dependencies = [
+  "deezer_dl @ git+ssh://git@github.com/MaximeSahuc/deezer-dl-cli",
+]
+
+[project.scripts]
+deezer-dl-bot = "main:main"
