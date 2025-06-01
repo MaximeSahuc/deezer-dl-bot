@@ -7,7 +7,8 @@ from deezer.download import (
     download_playlist,
     download_album,
     download_track,
-    set_should_use_symlinks_for_duplicates
+    set_should_use_links_for_duplicates,
+    set_duplicates_links_type
 )
 
 from jellyfinutils import scan_jellyfin_library
@@ -47,7 +48,10 @@ def main() -> int:
 
     # Init Deezer
     dc = DeezerClient(DEEZER_COOKIE_ARL)
-    set_should_use_symlinks_for_duplicates(True)
+
+    # Only hardlinks are supported by Jellyfin
+    set_should_use_links_for_duplicates(True)
+    set_duplicates_links_type("HARDLINK")
 
     # Get the list of Unread notifications of the Bot account
     notifications = list(
