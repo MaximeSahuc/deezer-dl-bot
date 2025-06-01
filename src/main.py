@@ -10,26 +10,46 @@ from deezer.download import (
     set_should_use_symlinks_for_duplicates
 )
 
+from jellyfinutils import scan_jellyfin_library
 
+
+# Deezer constants
 DEEZER_BASE_URL = "https://deezer.com/us"
-
 DEEZER_COOKIE_ARL = os.environ.get("DEEZER_COOKIE_ARL")
 MUSIC_DOWNLOAD_DIR = os.environ.get("MUSIC_DOWNLOAD_DIR")
 
+# Jellyfin constants
+JELLYFIN_SERVER_URL = os.environ.get("JELLYFIN_SERVER_URL")
+JELLYFIN_API_KEY = os.environ.get("JELLYFIN_API_KEY")
 
-if not DEEZER_COOKIE_ARL:
-    print("Env var DEEZER_COOKIE_ARL not defined! Exiting.")
-    exit(1)
 
-if not MUSIC_DOWNLOAD_DIR:
-    print("Env var MUSIC_DOWNLOAD_DIR not defined! Exiting.")
-    exit(1)
+def check_constants():
+    if not DEEZER_COOKIE_ARL:
+        print("Env var DEEZER_COOKIE_ARL not defined! Exiting.")
+        exit(1)
+
+    if not MUSIC_DOWNLOAD_DIR:
+        print("Env var MUSIC_DOWNLOAD_DIR not defined! Exiting.")
+        exit(1)
+    
+    if not JELLYFIN_SERVER_URL:
+        print("Env var JELLYFIN_SERVER_URL not defined! Exiting.")
+        exit(1)
+    
+    if not JELLYFIN_API_KEY:
+        print("Env var JELLYFIN_API_KEY not defined! Exiting.")
+        exit(1)
 
 
 def main() -> int:
+    # Check for undefined constants
+    check_constants()
+
+    # Init Deezer
     dc = DeezerClient(DEEZER_COOKIE_ARL)
     set_should_use_symlinks_for_duplicates(True)
 
+    # Get the list of Unread notifications of the Bot account
     notifications = list(
             filter(
             lambda n: n["read"] == False,
@@ -62,6 +82,7 @@ def main() -> int:
 
         print(f"Starting {url_type} download...")
 
+        # Download item
         match url_type:
             case "track":
                 download_track(MUSIC_DOWNLOAD_DIR, notif_shared_url)
@@ -77,7 +98,13 @@ def main() -> int:
                 continue
         
         print(f"{url_type} downloaded.\n\n".capitalize())
+
+        # Mark Deezer notification as Read
         dc.mark_notification_as_read(notif_id)
+
+        # Scan Jellyfin library for new songs
+        jellyfin_scan_result = scan_jellyfin_library(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY)
+        print(jellyfin_scan_result["message"])
 
     return 0
 

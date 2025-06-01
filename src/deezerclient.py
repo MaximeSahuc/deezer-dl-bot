@@ -1,6 +1,12 @@
 import requests
 
-from deezer.deezer import get_session, get_user_data, fetch_csrf_token_and_user_data, init_deezer_session
+from deezer.deezer import (
+    get_session,
+    get_user_data,
+    fetch_csrf_token_and_user_data,
+    init_deezer_session
+)
+
 
 class DeezerClient():
 
