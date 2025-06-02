@@ -3,17 +3,15 @@ name = "deezer-dl-bot"
 description = "Deezer-DL Bot for Jellyfin"
 readme = "README.md"
 version = "0.0.5"
+dependencies = [
+  "deezer_dl @ git+ssh://git@github.com/MaximeSahuc/deezer-dl-cli",
+]
+authors = [
+  {name = "Maxime Sahuc"},
+]
 
 [project.urls]
 Repository = "https://github.com/MaximeSahuc/deezer-dl-cli.git"
 
 [project.scripts]
 deezer-dl-bot = "main:main"
-
-dependencies = [
-  "deezer_dl @ git+ssh://git@github.com/MaximeSahuc/deezer-dl-cli",
-]
-
-authors = [
-  {name = "Maxime Sahuc"},
-]
