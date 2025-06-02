@@ -4,14 +4,15 @@ import os
 
 CONFIG_DEFAULT_TEMPLATE = {
     "deezer": {
-        "bot_arl_cookie": "12345678901234567890123456789012345678901234567890"
+        "bot_arl_cookie": "12345678901234567890123456789012345678901234567890",
     },
     "downloads": {
-        "music_download_path": "/path/to/jellyfin/data/media/Music/"
+        "music_download_path": "/path/to/jellyfin/data/media/Music/",
+        "per_user_directory": "true",
     },
     "jellyfin": {
         "server_url": "https://jellyfin.foo",
-        "api_key": "11de10c9368627286f0377f69f42c7d4"
+        "api_key": "11de10c9368627286f0377f69f42c7d4",
     }
 }
 

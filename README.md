@@ -15,7 +15,7 @@ Deezer DL bot for Jellyfin. The bot will periodically check for new follows and 
 `pipx install git+ssh://git@github.com/MaximeSahuc/deezer-dl-bot.git --force`
 
 
-## Launch
+## Launch Bot
 
 The program needs a `CONFIG_FILE` environment variable to specify where to store the configuration file. On the first start, the program will create a template configuration file and prompt you to configure it.
 

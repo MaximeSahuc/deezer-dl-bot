@@ -55,17 +55,23 @@ def check_for_new_download_requests(dc):
         notif_title = notif["title"]
         notif_id = notif["id"]
         notif_shared_url = f"{DEEZER_BASE_URL}{notif['url']}"
-        url_type = notif['url'].split("/")[1]
+        url_type = notif["url"].split("/")[1]
+        sender_name = notif["quotation"]["title"].split()[0].strip()
 
         print("-" * 30)
         print(f"Title: {notif_title}")
         print(f"Id: {notif_id}")
         print(f"Type: {url_type}")
+        print(f"Sender: {sender_name}")
         print(f"Url: {notif_shared_url}")
         print("-" * 30)
         print("\n")
 
         print(f"[DOWNLOAD] Starting {url_type} download...")
+
+        # Determine download path
+        if cm.get_value("downloads", "per_user_directory"):
+            download_path = os.path.join(download_path, sender_name)
 
         # Download item
         match url_type:
