@@ -41,6 +41,10 @@ class DeezerClient():
 
                 if response.json() and response.json()["error"]:
                     if len(response.json()["error"]):
+                        if "NEED_USER_AUTH_REQUIRED" in response.json()['error']:
+                            print("\nError: Invalid credentials. Please check your config file.")
+                            exit(1)
+
                         print(f"Error: {response.json()['error']}")
                 
                     return None
