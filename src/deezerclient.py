@@ -67,16 +67,15 @@ class DeezerClient():
             return
 
 
-    def mark_notification_as_read(self, notification_id):
+    def mark_notification_as_read(self, notification_ids):
         self.request_api(
             "POST",
             "notification.markAsRead",
             post_data={
-                "notif_ids": [
-                    notification_id
-                ]
+                "notif_ids": notification_ids
             }
         )
+
     
     def get_users_page_profile(self, tab):
         payload = {

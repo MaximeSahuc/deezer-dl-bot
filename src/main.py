@@ -91,7 +91,7 @@ def check_for_new_download_requests(dc):
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
         # Mark Deezer notification as Read
-        dc.mark_notification_as_read(notif_id)
+        dc.mark_notification_as_read([ notif_id ])
 
         # Scan Jellyfin library for new songs
         jellyfin_scan_result = scan_jellyfin_library(jellyfin_url, jellyfin_api_key)
