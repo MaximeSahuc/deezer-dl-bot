@@ -4,7 +4,7 @@ Deezer DL bot for Jellyfin. The bot will periodically check for new follows and 
 
 ## Requirements
 - pipx
-- Deezer ARL cookie
+- Deezer __Bot account__ ARL cookie
 - Jellyfin API token
 
 ## Install
@@ -18,6 +18,3 @@ JELLYFIN_SERVER_URL="https://jellyfin.foo.bar" \
 JELLYFIN_API_KEY="11de10c9368627286f0377f69f42c7d4" \
 deezer-dl-bot
 ```
-
-## TODO
-[ ] Generate m3u playlist file for playlists
