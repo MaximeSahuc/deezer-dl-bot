@@ -8,7 +8,7 @@ from deezer.download import (
     download_album,
     download_track,
     set_should_use_links_for_duplicates,
-    set_duplicates_links_type
+    set_duplicates_links_type,
 )
 
 from jellyfinclient import scan_jellyfin_library
@@ -37,10 +37,7 @@ def check_for_new_download_requests(dc):
 
     # Get the list of Unread notifications of the Bot account
     notifications = list(
-            filter(
-            lambda n: n["read"] == False,
-            dc.get_user_notifications()
-        )
+        filter(lambda n: n["read"] == False, dc.get_user_notifications())
     )
 
     print("[DOWNLOAD] Bot account unread notifications :")
@@ -48,9 +45,9 @@ def check_for_new_download_requests(dc):
     if len(notifications) == 0:
         print("No notifications")
         return 0
-    
+
     print()
-    
+
     for notif in notifications:
         notif_title = notif["title"]
         notif_id = notif["id"]
@@ -77,21 +74,21 @@ def check_for_new_download_requests(dc):
         match url_type:
             case "track":
                 download_track(download_path, notif_shared_url)
-            
+
             case "album":
                 download_album(download_path, notif_shared_url)
-            
+
             case "playlist":
                 download_playlist(download_path, notif_shared_url)
 
             case _:
                 print("Error: unknown url type")
                 continue
-        
+
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
         # Mark Deezer notification as Read
-        dc.mark_notification_as_read([ notif_id ])
+        dc.mark_notification_as_read([notif_id])
 
         # Scan Jellyfin library for new songs
         jellyfin_scan_result = scan_jellyfin_library(jellyfin_url, jellyfin_api_key)
@@ -113,17 +110,17 @@ def check_download_requests_thread(dc):
 
 def check_for_new_friend_requests(dc):
     followers = dc.get_users_page_profile("followers")
-    followers = [ user["USER_ID"] for user in followers ]
+    followers = [user["USER_ID"] for user in followers]
 
     following = dc.get_users_page_profile("following")
-    following = [ user["USER_ID"] for user in following ]
+    following = [user["USER_ID"] for user in following]
 
-    users_not_followed = [ user_id for user_id in followers if user_id not in following ]
+    users_not_followed = [user_id for user_id in followers if user_id not in following]
 
     for user in users_not_followed:
         print(f"[FRIENDS] User {user} not followed, following user...")
         dc.follow_user(user)
-    
+
 
 def check_friend_request_thread(dc):
     """
@@ -157,11 +154,15 @@ def main():
     set_duplicates_links_type("HARDLINK")
 
     # Check for new followers and follow back thread
-    friend_requests_thread = threading.Thread(target=check_friend_request_thread, args=(dc,))
+    friend_requests_thread = threading.Thread(
+        target=check_friend_request_thread, args=(dc,)
+    )
     friend_requests_thread.start()
 
     # Check for download requests via notifications thread
-    download_requests_thread = threading.Thread(target=check_download_requests_thread, args=(dc,))
+    download_requests_thread = threading.Thread(
+        target=check_download_requests_thread, args=(dc,)
+    )
     download_requests_thread.start()
 
 
