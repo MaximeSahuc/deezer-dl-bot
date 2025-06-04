@@ -2,15 +2,7 @@
 
 import os
 
-from deezerclient import DeezerClient
-from deezer.download import (
-    download_playlist,
-    download_album,
-    download_track,
-    set_should_use_links_for_duplicates,
-    set_duplicates_links_type,
-)
-
+from deezer.client import DeezerClient
 from jellyfinclient import scan_jellyfin_library
 
 
@@ -31,13 +23,9 @@ def check_constants():
 def check_for_new_download_requests(dc):
     global cm
 
-    download_path = cm.get_value("downloads", "music_download_path")
-    jellyfin_url = cm.get_value("jellyfin", "server_url")
-    jellyfin_api_key = cm.get_value("jellyfin", "api_key")
-
     # Get the list of Unread notifications of the Bot account
     notifications = list(
-        filter(lambda n: n["read"] == False, dc.get_user_notifications())
+        filter(lambda n: n["read"] == False, dc.api.get_user_notifications())
     )
 
     print("[DOWNLOAD] Bot account unread notifications :")
@@ -67,30 +55,27 @@ def check_for_new_download_requests(dc):
         print(f"[DOWNLOAD] Starting {url_type} download...")
 
         # Determine download path
-        if cm.get_value("downloads", "per_user_directory"):
+        download_path = cm.get_value("downloads", "music_download_path")
+        per_user_download_directory = cm.get_value("downloads", "per_user_directory")
+        if per_user_download_directory:
             download_path = os.path.join(download_path, sender_name)
 
         # Download item
-        match url_type:
-            case "track":
-                download_track(download_path, notif_shared_url)
-
-            case "album":
-                download_album(download_path, notif_shared_url)
-
-            case "playlist":
-                download_playlist(download_path, notif_shared_url)
-
-            case _:
-                print("Error: unknown url type")
-                continue
+        quality = cm.get_value("deezer", "prefered_audio_quality")
+        dc.get_downloader().download_from_url(
+            quality,
+            notif_shared_url,
+            download_path,
+        )
 
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
         # Mark Deezer notification as Read
-        dc.mark_notification_as_read([notif_id])
+        dc.api.mark_notification_as_read([notif_id])
 
         # Scan Jellyfin library for new songs
+        jellyfin_url = cm.get_value("jellyfin", "server_url")
+        jellyfin_api_key = cm.get_value("jellyfin", "api_key")
         jellyfin_scan_result = scan_jellyfin_library(jellyfin_url, jellyfin_api_key)
         print(jellyfin_scan_result["message"])
 
@@ -109,10 +94,11 @@ def check_download_requests_thread(dc):
 
 
 def check_for_new_friend_requests(dc):
-    followers = dc.get_users_page_profile("followers")
+    followers = dc.api.get_users_page_profile("followers")
+    print(f"Followers: {', '.join([user['BLOG_NAME'] for user in followers])}")
     followers = [user["USER_ID"] for user in followers]
 
-    following = dc.get_users_page_profile("following")
+    following = dc.api.get_users_page_profile("following")
     following = [user["USER_ID"] for user in following]
 
     users_not_followed = [user_id for user_id in followers if user_id not in following]
@@ -146,12 +132,11 @@ def main():
     global cm
     cm = ConfigManager(CONFIG_FILE)
 
-    # Init Deezer
-    dc = DeezerClient(cm.get_value("deezer", "bot_arl_cookie"))
+    # Init Deezer session
+    dc = DeezerClient(config_manager=cm)
 
     # Only hardlinks are supported by Jellyfin
-    set_should_use_links_for_duplicates(True)
-    set_duplicates_links_type("HARDLINK")
+    cm.set_value("downloads", "duplicates_link_type", "hardlink")
 
     # Check for new followers and follow back thread
     friend_requests_thread = threading.Thread(

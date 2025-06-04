@@ -4,10 +4,13 @@ import os
 
 CONFIG_DEFAULT_TEMPLATE = {
     "deezer": {
-        "bot_arl_cookie": "12345678901234567890123456789012345678901234567890",
+        "arl_cookie": "12345678901234567890123456789012345678901234567890",
+        "prefered_audio_quality": "MP3_320",
     },
     "downloads": {
         "music_download_path": "/path/to/jellyfin/data/media/Music/",
+        "use_links_for_duplicates": "true",
+        "duplicates_link_type": "hardlink",
         "per_user_directory": "true",
     },
     "jellyfin": {
@@ -46,9 +49,7 @@ class ConfigManager:
         if not self.config and self.default_template:
             self.config = self.default_template.copy()
             self.save()
-            print(
-                "Config file not found or empty. Initializing with default template."
-            )
+            print("Config file not found or empty. Initializing with default template.")
             print(f"Please edit the config file: {self.file_path}")
             exit(1)
 
