@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import threading
 
 from deezer.client import DeezerClient
 from jellyfinclient import scan_jellyfin_library
@@ -60,6 +61,9 @@ def check_for_new_download_requests(dc):
         if per_user_download_directory:
             download_path = os.path.join(download_path, sender_name)
 
+        # Mark Deezer notification as Read
+        dc.api.mark_notification_as_read([notif_id])
+
         # Download item
         quality = cm.get_value("deezer", "prefered_audio_quality")
         dc.get_downloader().download_from_url(
@@ -70,9 +74,6 @@ def check_for_new_download_requests(dc):
 
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
-        # Mark Deezer notification as Read
-        dc.api.mark_notification_as_read([notif_id])
-
         # Scan Jellyfin library for new songs
         jellyfin_url = cm.get_value("jellyfin", "server_url")
         jellyfin_api_key = cm.get_value("jellyfin", "api_key")
@@ -82,15 +83,18 @@ def check_for_new_download_requests(dc):
 
 def check_download_requests_thread(dc):
     """
-    Check for new download request every hour
+    Check for new download request every minute
     """
     import time
 
     while True:
         print("[DOWNLOAD] Checking for new download requests")
-        check_for_new_download_requests(dc)
-        print("[DOWNLOAD] Checked for new download requests. Checking back in an hour.")
-        time.sleep(60 * 60)
+        new_download_thread = threading.Thread(
+            target=check_for_new_download_requests, args=(dc,)
+        )
+        new_download_thread.start()
+        print("[DOWNLOAD] Checked for new download requests. Checking back in a minute.")
+        time.sleep(60)
 
 
 def check_for_new_friend_requests(dc):
@@ -122,7 +126,6 @@ def check_friend_request_thread(dc):
 
 
 def main():
-    import threading
     from config import ConfigManager
 
     # Check for undefined constants
