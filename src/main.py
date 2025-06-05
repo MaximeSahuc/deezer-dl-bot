@@ -105,7 +105,7 @@ def check_for_new_friend_requests(dc):
 
     for user in users_not_followed:
         print(f"[FRIENDS] User {user} not followed, following user...")
-        dc.follow_user(user)
+        dc.api.follow_user(user)
 
 
 def check_friend_request_thread(dc):
