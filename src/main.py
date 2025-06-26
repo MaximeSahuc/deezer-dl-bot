@@ -65,11 +65,9 @@ def check_for_new_download_requests(dc):
         dc.api.mark_notification_as_read([notif_id])
 
         # Download item
-        quality = cm.get_value("deezer", "prefered_audio_quality")
         dc.get_downloader().download_from_url(
-            quality,
-            notif_shared_url,
-            download_path,
+            url=notif_shared_url,
+            download_path=download_path,
         )
 
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
