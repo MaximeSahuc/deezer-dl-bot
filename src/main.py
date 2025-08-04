@@ -4,7 +4,7 @@ import os
 import threading
 
 from deezer.client import DeezerClient
-from jellyfinclient import scan_jellyfin_library
+from jellyfinclient import JellyfinClient
 
 
 # Constants
@@ -13,6 +13,9 @@ CONFIG_FILE = os.environ.get("CONFIG_FILE")
 
 # Config Manager
 cm = None
+
+# Jellyfin Client
+jc = None
 
 
 def check_constants():
@@ -26,7 +29,7 @@ def check_for_new_download_requests(dc):
 
     # Get the list of Unread notifications of the Bot account
     notifications = list(
-        filter(lambda n: n["read"] == False, dc.api.get_user_notifications())
+        filter(lambda n: n["read"] == False, dc.api.get_user_notifications())  # noqa E712
     )
 
     print("[DOWNLOAD] Bot account unread notifications :")
@@ -65,18 +68,74 @@ def check_for_new_download_requests(dc):
         dc.api.mark_notification_as_read([notif_id])
 
         # Download item
-        dc.get_downloader().download_from_url(
+        download_result = dc.get_downloader().download_from_url(
             url=notif_shared_url,
             download_path=download_path,
+            playlists_create_m3u=False,  # disable creation of M3U playlist files as we create dynamic playlists in Jellyfin
         )
+
+        if "error" in download_result:
+            print("Error:")
+            print(download_result["error"]["message"])
+            return
 
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
-        # Scan Jellyfin library for new songs
-        jellyfin_url = cm.get_value("jellyfin", "server_url")
-        jellyfin_api_key = cm.get_value("jellyfin", "api_key")
-        jellyfin_scan_result = scan_jellyfin_library(jellyfin_url, jellyfin_api_key)
-        print(jellyfin_scan_result["message"])
+        try:
+            # Scan Jellyfin library for new songs
+            # global jc
+            # jc.trigger_library_scan()
+            # time.sleep(15)  # leave time for Jellyfin to scan the libraries
+
+            # If a playlist was downloaded, create it in Jellyfin
+            if download_result["result"]["download_type"] == "playlist":
+                result = download_result["result"]["download_result"]
+                playlist_name = result["download_name"]
+                songs_paths = result["songs_absolute_paths"]
+                jellyfin_username = sender_name
+
+                # Create or get playlist
+                print("Create or get playlist")
+                playlist_id = jc.get_or_create_playlist(
+                    playlist_name, jellyfin_username
+                )
+
+                if not playlist_id:
+                    print("Failed to get or create playlist.")
+                    return
+
+                # Add cover to playlist
+                print("Add cover to playlist")
+                cover_path = result["cover_path"]
+                print(cover_path)
+                jc.update_playlist_image(
+                    playlist_id=playlist_id,
+                    image_path=cover_path,
+                )
+
+                # Get Jellyfin item IDs for songs
+                song_item_ids_to_add = []
+                print("\nResolving song paths to Jellyfin Item IDs:")
+                for file_path in songs_paths:
+                    item_id = jc.get_jellyfin_item_id_by_path(
+                        file_path, jellyfin_username
+                    )
+                    if item_id:
+                        song_item_ids_to_add.append(item_id)
+                    else:
+                        print(
+                            f"Warning: Could not find Jellyfin item for path: {file_path}. Skipping."
+                        )
+
+                # Add songs to the playlist
+                if song_item_ids_to_add:
+                    jc.add_songs_to_playlist(
+                        playlist_id, song_item_ids_to_add, jellyfin_username
+                    )
+                else:
+                    print("No valid Jellyfin songs found to add to the playlist.")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
 
 def check_download_requests_thread(dc):
@@ -91,7 +150,9 @@ def check_download_requests_thread(dc):
             target=check_for_new_download_requests, args=(dc,)
         )
         new_download_thread.start()
-        print("[DOWNLOAD] Checked for new download requests. Checking back in a minute.")
+        print(
+            "[DOWNLOAD] Checked for new download requests. Checking back in a minute."
+        )
         time.sleep(60)
 
 
@@ -135,6 +196,13 @@ def main():
 
     # Init Deezer session
     dc = DeezerClient(config_manager=cm)
+
+    # Init Jellyfin client
+    global jc
+    jc = JellyfinClient(
+        jellyfin_url=cm.get_value("jellyfin", "server_url"),
+        jellyfin_api_key=cm.get_value("jellyfin", "api_key"),
+    )
 
     # Only hardlinks are supported by Jellyfin
     cm.set_value("downloads", "duplicates_link_type", "hardlink")
