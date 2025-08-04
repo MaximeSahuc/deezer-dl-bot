@@ -109,9 +109,11 @@ class JellyfinClient:
         print(f"Playlist '{playlist_name}' not found. Creating...")
         create_playlist_payload = {
             "Name": playlist_name,
+            "Ids": [],
             "UserId": user_id,
-            "MediaType": "Audio",  # Assuming audio playlists
-            "IsPublic": "false",
+            "MediaType": "Audio",
+            "Users": [{"UserId": user_id, "CanEdit": True}],
+            "IsPublic": False,
         }
 
         try:
@@ -135,9 +137,7 @@ class JellyfinClient:
             return None
 
     def _fetch_music_library_items(self):
-        print(
-            "Fetching Jellyfin music library items..."
-        )
+        print("Fetching Jellyfin music library items...")
 
         # First, get music library IDs
         media_folders = self._jellyfin_api_get("Library/MediaFolders").get("Items", [])
@@ -192,7 +192,6 @@ class JellyfinClient:
 
         return None
 
-
     def add_songs_to_playlist(self, playlist_id, song_ids, username):
         """
         Adds a list of song Item IDs to a specified playlist,
@@ -214,7 +213,7 @@ class JellyfinClient:
         total_songs_added = 0
         # Process songs in chunks of 50
         for i in range(0, len(song_ids), MAX_IDS_PER_REQUEST):
-            chunk = song_ids[i:i + MAX_IDS_PER_REQUEST]
+            chunk = song_ids[i : i + MAX_IDS_PER_REQUEST]
             ids_comma_separated = ",".join(chunk)
 
             add_items_params = {
