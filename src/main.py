@@ -187,7 +187,7 @@ def check_friend_request_thread(dc):
 def main():
     from config import ConfigManager
 
-    print("Deezer-DL: v0.1.3")
+    print("Deezer-DL: v0.1.4")
 
     # Check for undefined constants
     check_constants()

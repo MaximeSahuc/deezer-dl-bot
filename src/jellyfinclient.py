@@ -205,16 +205,13 @@ class JellyfinClient:
             print("No songs to add to playlist.")
             return
 
-        ids_comma_separated = ",".join(song_ids)
-
-        add_items_params = {
-            "ids": ids_comma_separated,
-            "userId": user_id,
+        json_payload = {
+            "Ids": song_ids
         }
 
         try:
             self._jellyfin_api_post(
-                f"Playlists/{playlist_id}/Items", params=add_items_params
+                f"Playlists/{playlist_id}/Items", json_data=json_payload
             )
             print(
                 f"Successfully added {len(song_ids)} songs to playlist {playlist_id}."
