@@ -19,6 +19,8 @@ class JellyfinClient:
         self.api_key = jellyfin_api_key
         self.user_id = None
 
+        self.music_items = None
+
         if device_id is None:
             self.device_id = str(uuid.uuid4())
         else:
@@ -27,8 +29,6 @@ class JellyfinClient:
         self.client_name = client_name
         self.device_name = device_name
         self.client_version = client_version
-
-        self.all_music_items = None
 
         self.headers = {
             "X-MediaBrowser-Token": self.api_key,
@@ -135,7 +135,7 @@ class JellyfinClient:
 
     def _fetch_music_library_items(self):
         print(
-            "Fetching Jellyfin music library items... (This may take a while for large libraries)"
+            "Fetching Jellyfin music library items..."
         )
 
         # First, get music library IDs
@@ -150,25 +150,25 @@ class JellyfinClient:
             print("No music libraries found in Jellyfin.")
             return []
 
-        if not self.all_music_items:
-            for lib_id in music_library_ids:
-                # Fetch items with 'Path' field included. Use pagination for very large libraries.
-                limit = 50000
-                params = {
-                    "Recursive": "true",
-                    "ParentId": lib_id,
-                    "IncludeItemTypes": "Audio",
-                    "Fields": "Path",
-                    "UserId": self.user_id,
-                    "Limit": limit,
-                }
-                response_data = self._jellyfin_api_get("Items", params=params)
-                items_page = response_data.get("Items", [])
-                self.all_music_items = items_page
+        all_music_items = None
+        for lib_id in music_library_ids:
+            # Fetch items with 'Path' field included. Use pagination for very large libraries.
+            limit = 50000
+            params = {
+                "Recursive": "true",
+                "ParentId": lib_id,
+                "IncludeItemTypes": "Audio",
+                "Fields": "Path",
+                "UserId": self.user_id,
+                "Limit": limit,
+            }
+            response_data = self._jellyfin_api_get("Items", params=params)
+            items_page = response_data.get("Items", [])
+            all_music_items = items_page
 
-            print(f"Finished fetching {len(self.all_music_items)} music items from library.")
+        print(f"Finished fetching {len(all_music_items)} music items from library.")
 
-        return self.all_music_items
+        return all_music_items
 
     def get_jellyfin_item_id_by_path(self, file_path, username):
         """
@@ -181,9 +181,10 @@ class JellyfinClient:
         if self.user_id is None:
             self.user_id = user_id  # Store it for consistency
 
-        music_items = self._fetch_music_library_items()
+        if not self.music_items:
+            self.music_items = self._fetch_music_library_items()
 
-        for item in music_items:
+        for item in self.music_items:
             jellyfin_path = item.get("Path")
             if jellyfin_path and jellyfin_path.lower() == file_path.lower():
                 return item["Id"]
