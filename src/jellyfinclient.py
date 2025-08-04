@@ -111,6 +111,7 @@ class JellyfinClient:
             "Name": playlist_name,
             "UserId": user_id,
             "MediaType": "Audio",  # Assuming audio playlists
+            "IsPublic": "false",
         }
 
         try:
