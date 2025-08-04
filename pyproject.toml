@@ -2,7 +2,7 @@
 name = "deezer-dl-bot"
 description = "Deezer-DL Bot for Jellyfin"
 readme = "README.md"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
   "deezer_dl @ git+https://git@github.com/MaximeSahuc/deezer-dl",
   "pyyaml",

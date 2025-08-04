@@ -191,9 +191,11 @@ class JellyfinClient:
 
         return None
 
+
     def add_songs_to_playlist(self, playlist_id, song_ids, username):
         """
-        Adds a list of song Item IDs to a specified playlist.
+        Adds a list of song Item IDs to a specified playlist,
+        using a fixed pagination limit to avoid URL length errors.
         """
 
         user_id = self.get_user_id(username)
@@ -205,20 +207,36 @@ class JellyfinClient:
             print("No songs to add to playlist.")
             return
 
-        json_payload = {
-            "Ids": song_ids
-        }
+        # Limit the number of IDs per requests to avoid URL too long errors
+        MAX_IDS_PER_REQUEST = 50
 
-        try:
-            self._jellyfin_api_post(
-                f"Playlists/{playlist_id}", json_data=json_payload
-            )
-            print(
-                f"Successfully added {len(song_ids)} songs to playlist {playlist_id}."
-            )
-        except requests.exceptions.HTTPError as e:
-            print(f"Error adding songs to playlist {playlist_id}: {e}")
-            print(f"Response content: {e.response.text if e.response else 'N/A'}")
+        total_songs_added = 0
+        # Process songs in chunks of 50
+        for i in range(0, len(song_ids), MAX_IDS_PER_REQUEST):
+            chunk = song_ids[i:i + MAX_IDS_PER_REQUEST]
+            ids_comma_separated = ",".join(chunk)
+
+            add_items_params = {
+                "ids": ids_comma_separated,
+                "userId": user_id,
+            }
+
+            try:
+                self._jellyfin_api_post(
+                    f"Playlists/{playlist_id}/Items", params=add_items_params
+                )
+                print(
+                    f"Successfully added {len(chunk)} songs to playlist {playlist_id}."
+                )
+                total_songs_added += len(chunk)
+            except requests.exceptions.HTTPError as e:
+                print(f"Error adding songs to playlist {playlist_id}: {e}")
+                print(f"Response content: {e.response.text if e.response else 'N/A'}")
+                # We'll break the loop if one chunk fails.
+                break
+
+        if total_songs_added > 0:
+            print(f"Total songs added to playlist {playlist_id}: {total_songs_added}.")
 
     def trigger_library_scan(self):
         """Triggers a full library scan on Jellyfin."""
