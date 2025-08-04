@@ -14,9 +14,6 @@ CONFIG_FILE = os.environ.get("CONFIG_FILE")
 # Config Manager
 cm = None
 
-# Jellyfin Client
-jc = None
-
 
 def check_constants():
     if not CONFIG_FILE:
@@ -82,8 +79,11 @@ def check_for_new_download_requests(dc):
         print(f"[DOWNLOAD] {url_type} downloaded.\n".capitalize())
 
         try:
+            jc = JellyfinClient(
+                jellyfin_url=cm.get_value("jellyfin", "server_url"),
+                jellyfin_api_key=cm.get_value("jellyfin", "api_key"),
+            )
             # Scan Jellyfin library for new songs
-            # global jc
             # jc.trigger_library_scan()
             # time.sleep(15)  # leave time for Jellyfin to scan the libraries
 
@@ -196,13 +196,6 @@ def main():
 
     # Init Deezer session
     dc = DeezerClient(config_manager=cm)
-
-    # Init Jellyfin client
-    global jc
-    jc = JellyfinClient(
-        jellyfin_url=cm.get_value("jellyfin", "server_url"),
-        jellyfin_api_key=cm.get_value("jellyfin", "api_key"),
-    )
 
     # Only hardlinks are supported by Jellyfin
     cm.set_value("downloads", "duplicates_link_type", "hardlink")

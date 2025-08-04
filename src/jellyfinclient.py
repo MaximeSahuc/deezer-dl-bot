@@ -28,6 +28,8 @@ class JellyfinClient:
         self.device_name = device_name
         self.client_version = client_version
 
+        self.all_music_items = None
+
         self.headers = {
             "X-MediaBrowser-Token": self.api_key,
             "Content-Type": "application/json",
@@ -148,12 +150,10 @@ class JellyfinClient:
             print("No music libraries found in Jellyfin.")
             return []
 
-        all_music_items = []
-        for lib_id in music_library_ids:
-            # Fetch items with 'Path' field included. Use pagination for very large libraries.
-            limit = 50000
-            start_index = 0
-            while True:
+        if not self.all_music_items:
+            for lib_id in music_library_ids:
+                # Fetch items with 'Path' field included. Use pagination for very large libraries.
+                limit = 50000
                 params = {
                     "Recursive": "true",
                     "ParentId": lib_id,
@@ -161,18 +161,14 @@ class JellyfinClient:
                     "Fields": "Path",
                     "UserId": self.user_id,
                     "Limit": limit,
-                    "StartIndex": start_index,
                 }
                 response_data = self._jellyfin_api_get("Items", params=params)
                 items_page = response_data.get("Items", [])
-                all_music_items.extend(items_page)
+                self.all_music_items = items_page
 
-                if len(items_page) < limit:  # Last page
-                    break
-                start_index += limit
+            print(f"Finished fetching {len(self.all_music_items)} music items from library.")
 
-        print(f"Finished fetching {len(all_music_items)} music items from library.")
-        return all_music_items
+        return self.all_music_items
 
     def get_jellyfin_item_id_by_path(self, file_path, username):
         """
