@@ -219,6 +219,7 @@ class JellyfinClient:
             add_items_params = {
                 "ids": ids_comma_separated,
                 "userId": user_id,
+                "IsPublic": "false",
             }
 
             try:
