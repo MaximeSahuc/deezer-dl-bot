@@ -211,7 +211,7 @@ class JellyfinClient:
 
         try:
             self._jellyfin_api_post(
-                f"Playlists/{playlist_id}/Items", json_data=json_payload
+                f"Playlists/{playlist_id}", json_data=json_payload
             )
             print(
                 f"Successfully added {len(song_ids)} songs to playlist {playlist_id}."
