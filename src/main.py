@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 import threading
 
 from deezer.client import DeezerClient
@@ -84,8 +85,8 @@ def check_for_new_download_requests(dc):
                 jellyfin_api_key=cm.get_value("jellyfin", "api_key"),
             )
             # Scan Jellyfin library for new songs
-            # jc.trigger_library_scan()
-            # time.sleep(15)  # leave time for Jellyfin to scan the libraries
+            jc.trigger_library_scan()
+            time.sleep(30)  # leave time for Jellyfin to scan the libraries
 
             # If a playlist was downloaded, create it in Jellyfin
             if download_result["result"]["download_type"] == "playlist":
@@ -187,7 +188,7 @@ def check_friend_request_thread(dc):
 def main():
     from config import ConfigManager
 
-    print("Deezer-DL: v0.1.9")
+    print("Deezer-DL: v0.2.0")
 
     # Check for undefined constants
     check_constants()
