@@ -151,7 +151,7 @@ class JellyfinClient:
             print("No music libraries found in Jellyfin.")
             return []
 
-        all_music_items = None
+        all_music_items = []
         for lib_id in music_library_ids:
             # Fetch items with 'Path' field included. Use pagination for very large libraries.
             limit = 50000
@@ -160,28 +160,20 @@ class JellyfinClient:
                 "ParentId": lib_id,
                 "IncludeItemTypes": "Audio",
                 "Fields": "Path",
-                "UserId": self.user_id,
                 "Limit": limit,
             }
             response_data = self._jellyfin_api_get("Items", params=params)
             items_page = response_data.get("Items", [])
-            all_music_items = items_page
+            all_music_items.extend(items_page)
 
         print(f"Finished fetching {len(all_music_items)} music items from library.")
 
         return all_music_items
 
-    def get_jellyfin_item_id_by_path(self, file_path, username):
+    def get_jellyfin_item_id_by_path(self, file_path):
         """
         Attempts to find a Jellyfin item ID given its absolute file path.
         """
-        user_id = self.get_user_id(username)
-        if not user_id:
-            return None
-
-        if self.user_id is None:
-            self.user_id = user_id  # Store it for consistency
-
         if not self.music_items:
             self.music_items = self._fetch_music_library_items()
 

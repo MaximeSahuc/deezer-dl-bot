@@ -118,9 +118,7 @@ def check_for_new_download_requests(dc):
                 song_item_ids_to_add = []
                 print("\nResolving song paths to Jellyfin Item IDs:")
                 for file_path in songs_paths:
-                    item_id = jc.get_jellyfin_item_id_by_path(
-                        file_path, jellyfin_username
-                    )
+                    item_id = jc.get_jellyfin_item_id_by_path(file_path)
                     if item_id:
                         song_item_ids_to_add.append(item_id)
                     else:
@@ -188,7 +186,7 @@ def check_friend_request_thread(dc):
 def main():
     from config import ConfigManager
 
-    print("Deezer-DL: v0.2.0")
+    print("Deezer-DL: v0.2.1")
 
     # Check for undefined constants
     check_constants()
